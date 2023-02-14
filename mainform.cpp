@@ -34,6 +34,8 @@ MainForm::MainForm(QWidget *parent) : QWidget(parent), ui(new Ui::MainForm) {
                "  PRIMARY KEY(code)"
                ");");
     query.exec("INSERT OR REPLACE INTO prod VALUES (\'1\',\'123\',\'TEST\',100,0)");
+    query.exec("INSERT OR REPLACE INTO prod VALUES (\'2\',\'1234\',\'TEST test "
+               "test test test test test test test test test\',100,0)");
     _started = false;
     loadSettings();
 }
@@ -43,15 +45,50 @@ MainForm::~MainForm() { delete ui; }
 void MainForm::search() {
     qDebug() << _text;
     QSqlQuery query;
-    query.prepare("SELECT name, price FROM prod WHERE barcode = :BarCode");
-    query.bindValue(":BarCode", _text);
-    query.exec();
-    if (query.next()) {
-        ui->lname->setText(query.value(0).toString());
-        ui->lprice->setText("Цена: " + query.value(1).toString() + " тенге");
+    int wps = _wPrefix.length();
+    if (_text.left(wps) == _wPrefix) {
+        QString w, c;
+        if ((_wS == 0) || (_wS == 2)) {
+            w = _text.mid(wps, _wWeightLength);
+            c = _text.mid(wps + _wWeightLength, _wCodeLength);
+        } else if ((_wS == 3) || (_wS == 1)) {
+            c = _text.mid(wps, _wCodeLength);
+            w = _text.mid(wps + _wCodeLength, _wWeightLength);
+        }
+        c = QString("%1").arg(c.toInt());
+        qDebug() << w << c;
+        query.prepare("SELECT name, price FROM prod WHERE code = :Code");
+        query.bindValue(":Code", c);
+        query.exec();
+        if (query.next()) {
+            ui->lname->setText(query.value(0).toString());
+            QString sum;
+            if ((_wS == 0) || (_wS == 1)) {
+                double m = w.toDouble() / 1000.0;
+                w = QString("%1").arg(m, 0, 'f', 3);
+                sum = QString("%1").arg(m * query.value(1).toDouble(), 0, 'f', 0);
+            } else if ((_wS == 2) || (_wS == 3)) {
+                double m = w.toDouble();
+                w = QString("%1").arg(m, 0, 'f', 0);
+                sum = QString("%1").arg(m * query.value(1).toDouble(), 0, 'f', 0);
+            }
+            QString str = query.value(1).toString() + "*" + w + "=" + sum + " тенге";
+            ui->lprice->setText(str);
+        } else {
+            ui->lname->setText("Не найден");
+            ui->lprice->setText("");
+        }
     } else {
-        ui->lname->setText("Не найден");
-        ui->lprice->setText("Цена: ");
+        query.prepare("SELECT name, price FROM prod WHERE barcode = :BarCode");
+        query.bindValue(":BarCode", _text);
+        query.exec();
+        if (query.next()) {
+            ui->lname->setText(query.value(0).toString());
+            ui->lprice->setText(query.value(1).toString() + " тенге");
+        } else {
+            ui->lname->setText("Не найден");
+            ui->lprice->setText("");
+        }
     }
     _text = "";
 }
@@ -119,6 +156,12 @@ void MainForm::loadSettings() {
         font = ui->lprice->font();
         font.setPointSize(settings.value("PriceFont").toInt());
         ui->lprice->setFont(font);
+
+        _wS = settings.value("WS").toInt();
+        _wPrefix = settings.value("WPrefix").toString();
+        _wCodeLength = settings.value("WCodeLength").toInt();
+        _wWeightLength = settings.value("WWeightLength").toInt();
+
         if (!_started && (_timeUpdate != 0)) {
             _started = true;
             QTimer::singleShot(_timeUpdate * 1000, this, &MainForm::singleShot);
@@ -132,6 +175,10 @@ void MainForm::loadSettings() {
         settings.setValue("DataFile", "");
         settings.setValue("NameFont", 40);
         settings.setValue("PriceFont", 60);
+        settings.setValue("WPrefix", "99");
+        settings.setValue("WCodeLength", 5);
+        settings.setValue("WWeightLength", 5);
+        settings.setValue("WS", 1);
     }
 }
 

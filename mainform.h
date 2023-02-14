@@ -37,5 +37,9 @@ class MainForm : public QWidget {
     int _timeUpdate;
     QString _dataFile;
     QString _flagFile;
+    QString _wPrefix;
+    int _wS;
+    int _wCodeLength;
+    int _wWeightLength;
 };
 #endif // MAINFORM_H

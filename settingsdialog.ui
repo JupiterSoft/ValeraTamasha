@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>300</height>
+    <height>429</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -94,21 +94,21 @@
           <item>
            <widget class="QLabel" name="label_4">
             <property name="text">
-             <string>Периодичность опроса сек</string>
+             <string>Периодичность опроса сек.:</string>
             </property>
            </widget>
           </item>
           <item>
            <widget class="QLabel" name="label_5">
             <property name="text">
-             <string>Размер шрифта названия товара</string>
+             <string>Размер шрифта названия товара:</string>
             </property>
            </widget>
           </item>
           <item>
            <widget class="QLabel" name="label_6">
             <property name="text">
-             <string>Размер шрифта цены</string>
+             <string>Размер шрифта цены:</string>
             </property>
            </widget>
           </item>
@@ -144,6 +144,99 @@
            </widget>
           </item>
          </layout>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <item>
+         <widget class="QLabel" name="label_7">
+          <property name="text">
+           <string>Префикс весового:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="leWPrefix"/>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_5">
+        <item>
+         <widget class="QLabel" name="label_8">
+          <property name="text">
+           <string>Длина кода:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="sbWCode">
+          <property name="minimum">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <number>12</number>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_9">
+          <property name="text">
+           <string>Длина веса:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="sbWWeight">
+          <property name="minimum">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <number>12</number>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_6">
+        <item>
+         <widget class="QLabel" name="label_10">
+          <property name="text">
+           <string>Тип:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="cmbWS">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <item>
+           <property name="text">
+            <string>Вес (гр) | Код</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Код | Вес (гр)</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Вес (кг) | Код</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Код | Вес (кг)</string>
+           </property>
+          </item>
+         </widget>
         </item>
        </layout>
       </item>

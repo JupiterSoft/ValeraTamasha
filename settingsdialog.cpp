@@ -29,6 +29,10 @@ void SettingsDialog::on_pbCheck_clicked() {
         ui->sbPrice->setValue(settings.value("PriceFont").toInt());
         ui->leFileFlag->setText(settings.value("FlagFile").toString());
         ui->leDataFile->setText(settings.value("DataFile").toString());
+        ui->leWPrefix->setText(settings.value("WPrefix").toString());
+        ui->sbWCode->setValue(settings.value("WCodeLength").toInt());
+        ui->sbWWeight->setValue(settings.value("WWeightLength").toInt());
+        ui->cmbWS->setCurrentIndex(settings.value("WS").toInt());
     }
 }
 
@@ -41,6 +45,10 @@ void SettingsDialog::accept() {
         settings.setValue("PriceFont", ui->sbPrice->value());
         settings.setValue("FlagFile", ui->leFileFlag->text());
         settings.setValue("DataFile", ui->leDataFile->text());
+        settings.setValue("WPrefix", ui->leWPrefix->text());
+        settings.setValue("WCodeLength", ui->sbWCode->value());
+        settings.setValue("WWeightLength", ui->sbWWeight->value());
+        settings.setValue("WS", ui->cmbWS->currentIndex());
         if (!ui->leNewPassword->text().isEmpty()) {
             QByteArray arr = QCryptographicHash::hash(ui->leNewPassword->text().toUtf8(),
                                                       QCryptographicHash::Sha256);
