@@ -12,8 +12,46 @@
 #include <QKeyEvent>
 #include <QSettings>
 #include <QSqlDatabase>
+#include <QSqlDriver>
+#include <QSqlError>
+#include <QSqlField>
 #include <QSqlQuery>
+#include <QTextCodec>
 #include <QTimer>
+
+QString getLastExecutedQuery(const QSqlQuery &query) {
+    QString sql = query.executedQuery();
+    int nbBindValues = query.boundValues().size();
+
+    for (int i = 0, j = 0; j < nbBindValues;) {
+        int s = sql.indexOf(QLatin1Char('\''), i);
+        i = sql.indexOf(QLatin1Char('?'), i);
+        if (i < 1) {
+            break;
+        }
+
+        if ((s < i) && (s > 0)) {
+            i = sql.indexOf(QLatin1Char('\''), s + 1) + 1;
+            if (i < 2) {
+                break;
+            }
+        } else {
+            const QVariant &var = query.boundValue(j);
+            QSqlField field(QLatin1String(""), var.type());
+            if (var.isNull()) {
+                field.clear();
+            } else {
+                field.setValue(var);
+            }
+            QString formatV = query.driver()->formatValue(field);
+            sql.replace(i, 1, formatV);
+            i += formatV.length();
+            ++j;
+        }
+    }
+
+    return sql;
+}
 
 MainForm::MainForm(QWidget *parent) : QWidget(parent), ui(new Ui::MainForm) {
 
@@ -27,15 +65,16 @@ MainForm::MainForm(QWidget *parent) : QWidget(parent), ui(new Ui::MainForm) {
     QSqlQuery query;
     query.exec("CREATE TABLE IF NOT EXISTS prod ("
                "  code VARCHAR(20) NOT NULL UNIQUE,"
-               "  barcode VARCHAR(128),"
                "  name    VARCHAR(1024),"
                "  price   FLOAT,"
                "  vcode   INTEGER,"
                "  PRIMARY KEY(code)"
                ");");
-    query.exec("INSERT OR REPLACE INTO prod VALUES (\'1\',\'123\',\'TEST\',100,0)");
-    query.exec("INSERT OR REPLACE INTO prod VALUES (\'2\',\'1234\',\'TEST test "
-               "test test test test test test test test test\',100,0)");
+    query.exec("CREATE TABLE IF NOT EXISTS bc ("
+               "  barcode VARCHAR(128) NOT NULL UNIQUE,"
+               "  code    VARCHAR(20),"
+               "  PRIMARY KEY(barcode)"
+               ");");
     _started = false;
     loadSettings();
 }
@@ -79,12 +118,21 @@ void MainForm::search() {
             ui->lprice->setText("");
         }
     } else {
-        query.prepare("SELECT name, price FROM prod WHERE barcode = :BarCode");
+        query.prepare("SELECT code FROM bc WHERE barcode = :BarCode");
         query.bindValue(":BarCode", _text);
         query.exec();
         if (query.next()) {
-            ui->lname->setText(query.value(0).toString());
-            ui->lprice->setText(query.value(1).toString() + " тенге");
+            QString code = query.value(0).toString();
+            query.prepare("SELECT name, price FROM prod WHERE code = :code");
+            query.bindValue(":code", code);
+            query.exec();
+            if (query.next()) {
+                ui->lname->setText(query.value(0).toString());
+                ui->lprice->setText(query.value(1).toString() + " тенге");
+            } else {
+                ui->lname->setText("Не найден");
+                ui->lprice->setText("");
+            }
         } else {
             ui->lname->setText("Не найден");
             ui->lprice->setText("");
@@ -148,7 +196,7 @@ void MainForm::loadSettings() {
     QSettings settings("JupiterSoft", "ValeraTamasha");
     if (settings.contains("Password")) {
         _timeUpdate = settings.value("TimeUpdate").toInt();
-        _flagFile = settings.value("FileFlag").toString();
+        _flagFile = settings.value("FlagFile").toString();
         _dataFile = settings.value("DataFile").toString();
         QFont font = ui->lname->font();
         font.setPointSize(settings.value("NameFont").toInt());
@@ -185,8 +233,60 @@ void MainForm::loadSettings() {
 void MainForm::singleShot() {
     // todo
     qDebug() << "Single shot";
-    if (QFile::exists(_flagFile)) {
 
+    if (QFile::exists(_flagFile)) {
+        QFile file(_dataFile);
+        if (file.open(QIODevice::ReadOnly)) {
+            QSqlQuery query;
+            QTextCodec *codec = QTextCodec::codecForName("Windows-1251");
+            int mode = 0;
+            while (true) {
+                QByteArray array = file.readLine();
+                if (array.size() > 0) {
+                    QString line = codec->toUnicode(array);
+                    if (line == "$$$DELETEALLBARCODES\r\n") {
+                        mode = 1;
+                        continue;
+                    } else if (line == "$$$ADDBARCODES\r\n") {
+                        mode = 2;
+                        continue;
+                    }
+                    QStringList list = line.split(";");
+                    if (mode == 1) {
+                        QString code = list[0];
+                        QString name = list[2];
+                        QString price = list[8];
+                        QString wc = list[24];
+                        if (!price.isEmpty()) {
+                            query.prepare(
+                                "INSERT OR REPLACE INTO prod (code,name,price,vcode) VALUES"
+                                " (:code, :name, :price, :wcode)");
+                            query.bindValue(":code", code);
+                            query.bindValue(":name", name);
+                            query.bindValue(":price", price.toDouble());
+                            query.bindValue(":wcode", wc.toInt());
+                            if (!query.exec(/*str*/)) {
+                                qDebug() << query.lastError().text();
+                                qDebug() << getLastExecutedQuery(query);
+                                // qDebug() << str;
+                            }
+                        }
+                    } else if (mode == 2) {
+                        QString bc = list[0];
+                        QString code = list[1];
+                        query.prepare(
+                            "INSERT OR REPLACE INTO bc (barcode, code) VALUES (:bc, :code)");
+                        query.bindValue(":code", code);
+                        query.bindValue(":bc", bc);
+                        if (!query.exec()) {
+                            qDebug() << query.lastError().text();
+                            qDebug() << getLastExecutedQuery(query);
+                        }
+                    }
+                } else
+                    break;
+            }
+        }
         QFile::remove(_flagFile);
     }
     if (_timeUpdate != 0) {
@@ -196,3 +296,4 @@ void MainForm::singleShot() {
         _started = false;
     }
 }
+// 4690228103179
