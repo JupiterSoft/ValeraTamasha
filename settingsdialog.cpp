@@ -33,6 +33,7 @@ void SettingsDialog::on_pbCheck_clicked() {
         ui->sbWCode->setValue(settings.value("WCodeLength").toInt());
         ui->sbWWeight->setValue(settings.value("WWeightLength").toInt());
         ui->cmbWS->setCurrentIndex(settings.value("WS").toInt());
+        ui->leExitPassword->setText(settings.value("ExitPassword").toString());
     }
 }
 
@@ -54,6 +55,7 @@ void SettingsDialog::accept() {
                                                       QCryptographicHash::Sha256);
             settings.setValue("Password", arr);
         }
+        settings.setValue("ExitPassword", ui->leExitPassword->text());
     }
 
     QDialog::accept();

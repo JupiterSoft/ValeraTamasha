@@ -6,6 +6,7 @@
 #include "mainform.h"
 #include "./ui_mainform.h"
 
+#include "exitdialog.h"
 #include "settingsdialog.h"
 #include <QCryptographicHash>
 #include <QFile>
@@ -77,6 +78,7 @@ MainForm::MainForm(QWidget *parent) : QWidget(parent), ui(new Ui::MainForm) {
                ");");
     _started = false;
     loadSettings();
+    ui->pg->hide();
 }
 
 MainForm::~MainForm() { delete ui; }
@@ -113,9 +115,11 @@ void MainForm::search() {
             }
             QString str = query.value(1).toString() + "*" + w + "=" + sum + " тенге";
             ui->lprice->setText(str);
+            ui->lCode->setText(c);
         } else {
             ui->lname->setText("Не найден");
             ui->lprice->setText("");
+            ui->lCode->setText("");
         }
     } else {
         query.prepare("SELECT code FROM bc WHERE barcode = :BarCode");
@@ -129,16 +133,29 @@ void MainForm::search() {
             if (query.next()) {
                 ui->lname->setText(query.value(0).toString());
                 ui->lprice->setText(query.value(1).toString() + " тенге");
+                ui->lCode->setText(code);
             } else {
                 ui->lname->setText("Не найден");
                 ui->lprice->setText("");
+                ui->lCode->setText("");
             }
         } else {
             ui->lname->setText("Не найден");
             ui->lprice->setText("");
+            ui->lCode->setText("");
         }
     }
     _text = "";
+}
+
+void MainForm::on_pbExit_clicked() {
+    ExitDialog *dialog = new ExitDialog(this);
+    if (dialog->exec() == QDialog::Accepted) {
+        delete dialog;
+        close();
+    } else {
+        delete dialog;
+    }
 }
 
 void MainForm::keyPressEvent(QKeyEvent *event) {
@@ -240,8 +257,20 @@ void MainForm::singleShot() {
             QSqlQuery query;
             QTextCodec *codec = QTextCodec::codecForName("Windows-1251");
             int mode = 0;
+            int count = file.size() / 80;
+            ui->pg->show();
+            ui->pg->setMaximum(count);
+            ui->pg->setValue(0);
+            count = 0;
             while (true) {
                 QByteArray array = file.readLine();
+                ui->pg->setValue(++count);
+                if (count > ui->pg->maximum()) {
+                    ui->pg->setMaximum(count + 20);
+                }
+                ui->pg->update();
+                this->update();
+                QCoreApplication::processEvents();
                 if (array.size() > 0) {
                     QString line = codec->toUnicode(array);
                     if (line == "$$$DELETEALLBARCODES\r\n") {
@@ -286,6 +315,7 @@ void MainForm::singleShot() {
                 } else
                     break;
             }
+            ui->pg->hide();
         }
         QFile::remove(_flagFile);
     }

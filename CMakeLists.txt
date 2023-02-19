@@ -18,6 +18,7 @@ set(PROJECT_SOURCES
         mainform.h
         mainform.ui
         settingsdialog.h settingsdialog.cpp settingsdialog.ui
+        exitdialog.h exitdialog.cpp exitdialog.ui
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

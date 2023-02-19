@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>429</height>
+    <height>460</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -70,6 +70,13 @@
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="QLabel" name="label_11">
+            <property name="text">
+             <string>Пароль для выхода:</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </item>
         <item>
@@ -82,6 +89,9 @@
           </item>
           <item>
            <widget class="QLineEdit" name="leDataFile"/>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="leExitPassword"/>
           </item>
          </layout>
         </item>

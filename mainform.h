@@ -23,6 +23,9 @@ class MainForm : public QWidget {
 
     void search();
 
+  public slots:
+    void on_pbExit_clicked();
+
   protected slots:
     virtual void keyPressEvent(QKeyEvent *event);
     void loadSettings();
