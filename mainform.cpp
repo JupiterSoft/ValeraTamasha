@@ -258,34 +258,37 @@ void MainForm::singleShot() {
             QTextCodec *codec = QTextCodec::codecForName("Windows-1251");
             int mode = 0;
             int count = file.size() / 80;
+            QByteArray array = file.readLine();
+            QString line = codec->toUnicode(array);
+            count = line.toInt();
             ui->pg->show();
             ui->pg->setMaximum(count);
             ui->pg->setValue(0);
             count = 0;
             while (true) {
                 QByteArray array = file.readLine();
-                ui->pg->setValue(++count);
-                if (count > ui->pg->maximum()) {
-                    ui->pg->setMaximum(count + 20);
-                }
                 ui->pg->update();
                 this->update();
                 QCoreApplication::processEvents();
                 if (array.size() > 0) {
                     QString line = codec->toUnicode(array);
-                    if (line == "$$$DELETEALLBARCODES\r\n") {
+                    if (line == "$$$MODE1\r\n") {
                         mode = 1;
                         continue;
-                    } else if (line == "$$$ADDBARCODES\r\n") {
+                    } else if (line == "$$$MODE2\r\n") {
                         mode = 2;
                         continue;
+                    }
+                    ui->pg->setValue(++count);
+                    if (count > ui->pg->maximum()) {
+                        ui->pg->setMaximum(count + 20);
                     }
                     QStringList list = line.split(";");
                     if (mode == 1) {
                         QString code = list[0];
-                        QString name = list[2];
-                        QString price = list[8];
-                        QString wc = list[24];
+                        QString name = list[1];
+                        QString price = list[2];
+                        QString wc = list[3];
                         if (!price.isEmpty()) {
                             query.prepare(
                                 "INSERT OR REPLACE INTO prod (code,name,price,vcode) VALUES"
