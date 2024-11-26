@@ -98,8 +98,8 @@ void MainForm::search() {
         }
         c = QString("%1").arg(c.toInt());
         qDebug() << w << c;
-        query.prepare("SELECT name, price FROM prod WHERE code = :Code");
-        query.bindValue(":Code", c);
+        query.prepare("SELECT name, price FROM prod WHERE vcode = :Code");
+        query.bindValue(":Code", c.toInt());
         query.exec();
         if (query.next()) {
             ui->lname->setText(query.value(0).toString());
@@ -127,6 +127,7 @@ void MainForm::search() {
         query.exec();
         if (query.next()) {
             QString code = query.value(0).toString();
+            qDebug() << "Code=" << code;
             query.prepare("SELECT name, price FROM prod WHERE code = :code");
             query.bindValue(":code", code);
             query.exec();
@@ -135,12 +136,12 @@ void MainForm::search() {
                 ui->lprice->setText(query.value(1).toString() + " тенге");
                 ui->lCode->setText(code);
             } else {
-                ui->lname->setText("Не найден");
+                ui->lname->setText("Не найден 2");
                 ui->lprice->setText("");
                 ui->lCode->setText("");
             }
         } else {
-            ui->lname->setText("Не найден");
+            ui->lname->setText("Не найден 1");
             ui->lprice->setText("");
             ui->lCode->setText("");
         }
@@ -259,8 +260,11 @@ void MainForm::singleShot() {
             int mode = 0;
             int count = file.size() / 80;
             QByteArray array = file.readLine();
+            array = file.readLine();
             QString line = codec->toUnicode(array);
+            line = codec->toUnicode(array).replace("\r\n","");
             count = line.toInt();
+            qDebug() << count << "--" << line;
             ui->pg->show();
             ui->pg->setMaximum(count);
             ui->pg->setValue(0);
